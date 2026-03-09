@@ -1,0 +1,75 @@
+{
+  "projectType": "ai-ml",
+  "projectName": "MilesONerd AI Telegram Bot",
+  "projectDescription": "An intelligent Telegram bot powered by Llama 3.1-Nemotron and BART models for text generation and summarization",
+  "theme": "aspen",
+  "primaryColor": "#816672",
+  "lightColor": "#2a303d",
+  "darkColor": "#e1e0df",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/installation",
+              "guides/configuration",
+              "guides/message-handling",
+              "guides/deployment"
+            ]
+          },
+          {
+            "group": "AI Models",
+            "pages": [
+              "models/overview",
+              "models/llama-nemotron",
+              "models/bart-summarization"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Core Modules",
+            "pages": [
+              "api/bot",
+              "api/ai-handler"
+            ]
+          },
+          {
+            "group": "Commands",
+            "pages": [
+              "api/commands"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Advanced language understanding using Llama 3.1-Nemotron-70B",
+    "Text summarization with BART model",
+    "Intelligent message routing based on content type",
+    "GPU-accelerated inference with PyTorch",
+    "Docker deployment support"
+  ],
+  "publicApiSurface": [
+    "AIModelHandler.generate_response()",
+    "AIModelHandler.summarize_text()",
+    "AIModelHandler.initialize_models()",
+    "/start command",
+    "/help command",
+    "/about command"
+  ]
+}
