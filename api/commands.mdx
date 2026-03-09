@@ -1,0 +1,260 @@
+---
+title: 'Bot Commands'
+description: 'Available Telegram bot commands and their functionality'
+---
+
+## Overview
+
+MilesONerd AI Bot provides three core commands for user interaction. All commands are implemented as asynchronous handlers in the `bot.py` module.
+
+---
+
+## Commands
+
+### /start
+
+Initiates interaction with the bot and displays a welcome message.
+
+**Handler Function:** `start()` (bot.py:21-28)
+
+**Response:**
+```
+Hi [User Name]! I'm MilesONerd AI, your intelligent assistant.
+I can help you with various tasks using advanced AI models and internet search.
+Use /help to see available commands.
+```
+
+**Features:**
+- Personalizes greeting with user's Telegram name
+- Uses HTML formatting for mentions
+- Introduces the bot's capabilities
+- Directs users to help command
+
+**Example Usage:**
+```
+User: /start
+Bot: Hi John! I'm MilesONerd AI, your intelligent assistant.
+     I can help you with various tasks using advanced AI models and internet search.
+     Use /help to see available commands.
+```
+
+---
+
+### /help
+
+Displays comprehensive help information about bot capabilities and commands.
+
+**Handler Function:** `help_command()` (bot.py:30-47)
+
+**Response:**
+```
+Available commands:
+/start - Start the bot
+/help - Show this help message
+/about - Learn more about MilesONerd AI
+
+Message handling:
+- Short questions: Quick responses using lightweight model
+- Long messages: Summarization and detailed response
+- Include 'summarize' or 'tldr' for text summarization
+- Chat-related queries: Optimized conversation handling
+- Regular messages: Comprehensive AI-powered responses
+
+You can send me any message, and I'll process it using the most appropriate AI model!
+```
+
+**Information Provided:**
+1. **Command List**: All available bot commands
+2. **Message Handling**: How the bot processes different types of messages
+3. **Features**: Special keywords and capabilities
+
+**Example Usage:**
+```
+User: /help
+Bot: [Displays full help message with commands and capabilities]
+```
+
+---
+
+### /about
+
+Provides information about the bot's features and technology stack.
+
+**Handler Function:** `about_command()` (bot.py:49-62)
+
+**Response:**
+```
+MilesONerd AI is an intelligent assistant powered by advanced AI models and internet search capabilities.
+
+Features:
+- Advanced language understanding
+- Internet search integration
+- Continuous learning from interactions
+- Multiple AI models for different tasks
+
+Created with ❤️ using python-telegram-bot and Hugging Face models.
+```
+
+**Information Provided:**
+1. **Bot Description**: Overview of capabilities
+2. **Key Features**: 
+   - Advanced language understanding
+   - Internet search integration
+   - Continuous learning from interactions
+   - Multiple AI models for different tasks
+3. **Technology**: python-telegram-bot and Hugging Face models
+
+**Example Usage:**
+```
+User: /about
+Bot: MilesONerd AI is an intelligent assistant powered by advanced AI models...
+     [Full about message]
+```
+
+---
+
+## Message Handling
+
+In addition to commands, the bot processes regular text messages intelligently.
+
+**Handler Function:** `handle_message()` (bot.py:64-114)
+
+### Message Routing
+
+The bot routes messages to different AI models based on content:
+
+#### 1. Long Messages (>100 words)
+
+**Processing:**
+- BART model summarizes the message
+- Llama generates response based on summary
+- Max response length: 200 tokens
+
+**Example:**
+```
+User: [Long article text, 150 words]
+Bot: [Processes with BART summarization + Llama response]
+```
+
+#### 2. Summarization Requests
+
+**Keywords:** `summarize`, `summary`, `tldr`
+
+**Processing:**
+- BART model generates summary
+- Direct summarization without additional response
+
+**Example:**
+```
+User: Summarize this article: [article text]
+Bot: [BART-generated summary]
+```
+
+#### 3. Chat/Conversation Queries
+
+**Keywords:** `chat`, `conversation`, `talk`
+
+**Processing:**
+- Llama model for conversational responses
+- Max response length: 200 tokens
+
+**Example:**
+```
+User: Let's chat about AI developments
+Bot: [Llama-generated conversational response]
+```
+
+#### 4. Short Queries (Less Than 10 Words)
+
+**Processing:**
+- Llama model for quick responses
+- Max response length: 100 tokens
+
+**Example:**
+```
+User: What is Python?
+Bot: [Concise Llama response]
+```
+
+#### 5. Regular Messages
+
+**Processing:**
+- Llama model for comprehensive responses
+- Max response length: 150 tokens
+- Default handler for messages that don't match other categories
+
+**Example:**
+```
+User: Can you explain machine learning?
+Bot: [Detailed Llama response]
+```
+
+---
+
+## Command Implementation
+
+All commands are registered in the `main()` function:
+
+```python
+application.add_handler(CommandHandler("start", start))
+application.add_handler(CommandHandler("help", help_command))
+application.add_handler(CommandHandler("about", about_command))
+application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+```
+
+**Handler Types:**
+- `CommandHandler`: For `/command` patterns
+- `MessageHandler`: For regular text messages (excludes commands)
+
+**Filters:**
+- `filters.TEXT`: Only processes text messages
+- `~filters.COMMAND`: Excludes messages starting with `/`
+
+---
+
+## Error Handling
+
+All command handlers include error handling:
+
+```python
+try:
+    # Process message
+except Exception as e:
+    logger.error(f"Error processing message: {str(e)}")
+    await update.message.reply_text(
+        "I apologize, but I encountered an error while processing your message. "
+        "Please try again later."
+    )
+```
+
+**Features:**
+- Logs errors for debugging
+- Sends user-friendly error messages
+- Prevents bot crashes from uncaught exceptions
+- Shows typing indicator during processing
+
+---
+
+## User Experience Features
+
+### Typing Indicator
+
+The bot shows a "typing..." indicator while processing messages:
+
+```python
+await update.message.chat.send_action(action="typing")
+```
+
+This provides visual feedback that the bot is working on a response.
+
+### HTML Formatting
+
+The `/start` command uses HTML formatting for personalized mentions:
+
+```python
+await update.message.reply_html(
+    f"Hi {user.mention_html()}! I'm MilesONerd AI..."
+)
+```
+
+This creates clickable user mentions in the response.

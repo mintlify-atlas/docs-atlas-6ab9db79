@@ -1,0 +1,255 @@
+---
+title: 'Bot Module'
+description: 'Core Telegram bot module with command handlers and message processing'
+---
+
+## Overview
+
+The `bot.py` module contains the main Telegram bot implementation for MilesONerd AI. It handles user interactions, processes commands, and routes messages to the appropriate AI models through the AI handler.
+
+## Functions
+
+### start()
+
+Sends a welcome message when the `/start` command is issued.
+
+```python
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
+```
+
+<ParamField path="update" type="Update" required>
+  Telegram Update object containing the incoming update data
+</ParamField>
+
+<ParamField path="context" type="ContextTypes.DEFAULT_TYPE" required>
+  Context object for the handler callback
+</ParamField>
+
+<ResponseField name="return" type="None">
+  This function doesn't return a value
+</ResponseField>
+
+**Behavior:**
+- Greets the user with their name using HTML formatting
+- Introduces MilesONerd AI capabilities
+- Directs users to the `/help` command for more information
+
+**Location:** `bot.py:21-28`
+
+---
+
+### help_command()
+
+Sends a help message when the `/help` command is issued.
+
+```python
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
+```
+
+<ParamField path="update" type="Update" required>
+  Telegram Update object containing the incoming update data
+</ParamField>
+
+<ParamField path="context" type="ContextTypes.DEFAULT_TYPE" required>
+  Context object for the handler callback
+</ParamField>
+
+<ResponseField name="return" type="None">
+  This function doesn't return a value
+</ResponseField>
+
+**Behavior:**
+- Displays all available commands (`/start`, `/help`, `/about`)
+- Explains message handling capabilities:
+  - Short questions: Quick responses using lightweight model
+  - Long messages: Summarization and detailed response
+  - Summarization requests: Using 'summarize' or 'tldr' keywords
+  - Chat-related queries: Optimized conversation handling
+  - Regular messages: Comprehensive AI-powered responses
+
+**Location:** `bot.py:30-47`
+
+---
+
+### about_command()
+
+Sends information about the bot when the `/about` command is issued.
+
+```python
+async def about_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
+```
+
+<ParamField path="update" type="Update" required>
+  Telegram Update object containing the incoming update data
+</ParamField>
+
+<ParamField path="context" type="ContextTypes.DEFAULT_TYPE" required>
+  Context object for the handler callback
+</ParamField>
+
+<ResponseField name="return" type="None">
+  This function doesn't return a value
+</ResponseField>
+
+**Behavior:**
+- Provides information about MilesONerd AI features:
+  - Advanced language understanding
+  - Internet search integration
+  - Continuous learning from interactions
+  - Multiple AI models for different tasks
+- Credits the technology stack (python-telegram-bot and Hugging Face models)
+
+**Location:** `bot.py:49-62`
+
+---
+
+### handle_message()
+
+Handles user messages using appropriate AI models based on content.
+
+```python
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
+```
+
+<ParamField path="update" type="Update" required>
+  Telegram Update object containing the incoming message
+</ParamField>
+
+<ParamField path="context" type="ContextTypes.DEFAULT_TYPE" required>
+  Context object for the handler callback
+</ParamField>
+
+<ResponseField name="return" type="None">
+  This function doesn't return a value
+</ResponseField>
+
+**Behavior:**
+
+The function intelligently routes messages to different AI models based on content:
+
+1. **Long messages (>100 words)**
+   - Uses BART for summarization
+   - Uses Llama for response generation based on summary
+   - Max length: 200 tokens
+
+2. **Summarization requests** (keywords: 'summarize', 'summary', 'tldr')
+   - Uses BART summarization model
+
+3. **Chat/conversation queries** (keywords: 'chat', 'conversation', 'talk')
+   - Uses Llama model
+   - Max length: 200 tokens
+
+4. **Short queries (less than 10 words)**
+   - Uses Llama for quick responses
+   - Max length: 100 tokens
+
+5. **Default messages**
+   - Uses Llama for general responses
+   - Max length: 150 tokens
+
+**Error Handling:**
+- Logs errors using the logger
+- Sends a user-friendly error message on failure
+- Shows typing indicator while processing
+
+**Location:** `bot.py:64-114`
+
+---
+
+### initialize()
+
+Initializes AI models and other components.
+
+```python
+async def initialize() -> bool
+```
+
+<ResponseField name="return" type="bool">
+  True if initialization successful, False otherwise
+</ResponseField>
+
+**Behavior:**
+- Calls `ai_handler.initialize_models()` to load AI models
+- Logs initialization progress and results
+- Returns initialization status
+
+**Error Handling:**
+- Catches and logs any exceptions during initialization
+- Returns False on failure
+
+**Location:** `bot.py:116-128`
+
+---
+
+### main()
+
+Starts the bot.
+
+```python
+def main() -> None
+```
+
+<ResponseField name="return" type="None">
+  This function doesn't return a value
+</ResponseField>
+
+**Behavior:**
+
+1. **Environment Setup**
+   - Retrieves `TELEGRAM_BOT_TOKEN` from environment variables
+   - Exits if token is not found
+
+2. **Application Creation**
+   - Creates Telegram Application with bot token
+   - Sets up event loop for async operations
+
+3. **Model Initialization**
+   - Runs `initialize()` to load AI models
+   - Exits if initialization fails
+
+4. **Handler Registration**
+   - Registers command handlers: `/start`, `/help`, `/about`
+   - Registers message handler for text messages (excluding commands)
+
+5. **Bot Execution**
+   - Starts polling for updates
+   - Allows all update types
+   - Logs startup message
+
+**Error Handling:**
+- Validates presence of bot token
+- Ensures models are initialized before starting
+- Properly closes event loop on exit
+- Handles KeyboardInterrupt for graceful shutdown
+- Re-raises exceptions for proper error handling
+
+**Location:** `bot.py:130-174`
+
+---
+
+## Dependencies
+
+```python
+import asyncio
+import logging
+import os
+from dotenv import load_dotenv
+from telegram import Update
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+from ai_handler import ai_handler
+```
+
+## Environment Variables
+
+- `TELEGRAM_BOT_TOKEN` (required): Telegram bot authentication token
+
+## Logging
+
+The module uses Python's logging module with INFO level:
+
+```python
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+```

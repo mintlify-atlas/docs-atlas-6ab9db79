@@ -1,97 +1,80 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "MilesONerd AI Telegram Bot"
+description: "An intelligent Telegram bot powered by advanced AI models for text generation and summarization"
 ---
 
-## Setting up
+<div style={{textAlign: 'center', padding: '60px 20px'}}>
+  <h1 style={{fontSize: '48px', fontWeight: '700', color: '#816672', marginBottom: '24px'}}>
+    MilesONerd AI Telegram Bot
+  </h1>
+  <p style={{fontSize: '24px', color: '#4A4A4A', maxWidth: '800px', margin: '0 auto 48px'}}>
+    An intelligent Telegram bot powered by Llama 3.1-Nemotron and BART models for advanced language understanding and text summarization
+  </p>
+</div>
 
-Get your documentation site up and running in minutes.
+## Get Started
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
+Build your intelligent Telegram bot in minutes.
 
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Introduction" icon="book" href="/introduction">
+    Learn about the bot's capabilities and architecture
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Get up and running with your first bot instance
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
-  </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
-  </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## Key Features
 
-Everything you need to create world-class documentation.
+Powerful AI capabilities powered by state-of-the-art models.
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
+<CardGroup cols={2}>
+  <Card title="Llama 3.1-Nemotron" icon="brain" href="/models/llama-nemotron">
+    Advanced language understanding with Llama 3.1-Nemotron-70B
   </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
+  <Card title="BART Summarization" icon="compress" href="/models/bart-summarization">
+    Text summarization using Facebook's BART model
   </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
+  <Card title="Intelligent Routing" icon="route" href="/guides/message-handling">
+    Smart message routing based on content type and length
   </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
+  <Card title="GPU Acceleration" icon="microchip" href="/models/overview">
+    GPU-accelerated inference with PyTorch for fast responses
   </Card>
-</Columns>
+</CardGroup>
 
-## Need inspiration?
+## Guides
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+Everything you need to deploy and configure your bot.
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/guides/installation">
+    Step-by-step installation guide
+  </Card>
+  <Card title="Configuration" icon="gear" href="/guides/configuration">
+    Configure environment variables and model settings
+  </Card>
+  <Card title="Message Handling" icon="messages" href="/guides/message-handling">
+    Understand how messages are processed and routed
+  </Card>
+  <Card title="Deployment" icon="cloud" href="/guides/deployment">
+    Deploy with Docker or run directly with Python
+  </Card>
+</CardGroup>
+
+## API Reference
+
+Explore the core modules and command handlers.
+
+<CardGroup cols={2}>
+  <Card title="Bot Module" icon="robot" href="/api/bot">
+    Telegram bot command and message handlers
+  </Card>
+  <Card title="AI Handler" icon="wand-magic-sparkles" href="/api/ai-handler">
+    AI model initialization and text generation
+  </Card>
+  <Card title="Commands" icon="terminal" href="/api/commands">
+    Available bot commands and their usage
+  </Card>
+</CardGroup>

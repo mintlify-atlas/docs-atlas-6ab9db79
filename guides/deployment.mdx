@@ -1,0 +1,412 @@
+---
+title: Deployment
+description: Deploy MilesONerd AI Telegram Bot using Python, Docker, or cloud platforms
+icon: 'rocket'
+---
+
+## Deployment Options
+
+MilesONerd AI can be deployed in multiple ways depending on your infrastructure and requirements:
+
+1. **Direct Python Execution** - Run locally or on a server
+2. **Docker Container** - Containerized deployment
+3. **Cloud Platforms** - Heroku, Railway, or other PaaS providers
+
+## Running with Python
+
+The simplest way to run the bot is directly with Python.
+
+<Steps>
+  <Step title="Ensure Configuration">
+    Verify your `.env` file is properly configured with your bot token:
+    
+    ```bash
+    cat .env
+    ```
+    
+    You should see:
+    ```bash
+    TELEGRAM_BOT_TOKEN=your_actual_token_here
+    ```
+  </Step>
+
+  <Step title="Start the Bot">
+    Run the bot using Python:
+    
+    ```bash
+    python bot.py
+    ```
+  </Step>
+
+  <Step title="Verify Startup">
+    Look for successful initialization messages:
+    
+    ```
+    2024-03-09 10:00:00 - __main__ - INFO - Initializing AI models...
+    2024-03-09 10:00:01 - __main__ - INFO - CUDA available: True
+    2024-03-09 10:00:01 - __main__ - INFO - GPU Device: NVIDIA GeForce RTX 3090
+    2024-03-09 10:00:02 - __main__ - INFO - Loading BART model: facebook/bart-large
+    2024-03-09 10:00:05 - __main__ - INFO - BART model loaded successfully
+    2024-03-09 10:00:05 - __main__ - INFO - Loading Llama model: nvidia/Llama-3.1-Nemotron-70B-Instruct-HF
+    2024-03-09 10:01:30 - __main__ - INFO - Llama model loaded successfully
+    2024-03-09 10:01:30 - __main__ - INFO - MilesONerd AI Bot is starting...
+    ```
+  </Step>
+</Steps>
+
+<Info>
+  The first run will download models from Hugging Face Hub, which may take several minutes. Subsequent runs will use cached models.
+</Info>
+
+### Running in Background
+
+To keep the bot running in the background on Linux:
+
+<CodeGroup>
+```bash Using nohup
+nohup python bot.py > bot.log 2>&1 &
+```
+
+```bash Using screen
+screen -S telegram-bot
+python bot.py
+# Press Ctrl+A, then D to detach
+
+# To reattach:
+screen -r telegram-bot
+```
+
+```bash Using systemd
+# Create service file: /etc/systemd/system/telegram-bot.service
+[Unit]
+Description=MilesONerd AI Telegram Bot
+After=network.target
+
+[Service]
+Type=simple
+User=youruser
+WorkingDirectory=/path/to/telegram-bot
+Environment="PATH=/path/to/venv/bin"
+ExecStart=/path/to/venv/bin/python bot.py
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+
+# Enable and start:
+sudo systemctl enable telegram-bot
+sudo systemctl start telegram-bot
+```
+</CodeGroup>
+
+## Docker Deployment
+
+Deploy the bot using Docker for better isolation and portability.
+
+### Dockerfile
+
+The project includes a production-ready Dockerfile:
+
+```dockerfile Dockerfile
+# Choose Python 3.8 or higher base image
+FROM python:3.8-slim
+
+# Set the working directory inside the container
+WORKDIR /app
+
+# Copy the requirements.txt file into the container
+COPY requirements.txt /app/
+
+# Copy the .env.example file into the container
+COPY .env.example /app/.env
+
+# Install the project dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy your project code into the container
+COPY . /app/
+
+# Define the command to run your program
+CMD ["python", "bot.py"]
+```
+
+### Building and Running
+
+<Steps>
+  <Step title="Build Docker Image">
+    Build the Docker image:
+    
+    ```bash
+    docker build -t milesonerd-ai-bot .
+    ```
+  </Step>
+
+  <Step title="Create .env File">
+    Create a `.env` file with your configuration:
+    
+    ```bash
+    echo "TELEGRAM_BOT_TOKEN=your_token_here" > .env
+    echo "DEFAULT_MODEL=llama" >> .env
+    echo "ENABLE_CONTINUOUS_LEARNING=true" >> .env
+    ```
+  </Step>
+
+  <Step title="Run Container">
+    Run the bot container:
+    
+    ```bash
+    docker run -d \
+      --name telegram-bot \
+      --env-file .env \
+      --restart unless-stopped \
+      milesonerd-ai-bot
+    ```
+    
+    For GPU support, add:
+    ```bash
+    docker run -d \
+      --name telegram-bot \
+      --env-file .env \
+      --gpus all \
+      --restart unless-stopped \
+      milesonerd-ai-bot
+    ```
+  </Step>
+
+  <Step title="View Logs">
+    Monitor the bot logs:
+    
+    ```bash
+    docker logs -f telegram-bot
+    ```
+  </Step>
+</Steps>
+
+<Warning>
+  The Dockerfile copies `.env.example` as `.env` by default. For production, mount your actual `.env` file using `-v ./env:/app/.env` or use `--env-file`.
+</Warning>
+
+### Docker Compose
+
+For easier management, use Docker Compose:
+
+```yaml docker-compose.yml
+version: '3.8'
+
+services:
+  telegram-bot:
+    build: .
+    container_name: milesonerd-ai-bot
+    env_file:
+      - .env
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+```
+
+Run with:
+```bash
+docker-compose up -d
+```
+
+## Cloud Platform Deployment
+
+### Heroku Deployment
+
+The bot includes a Procfile for Heroku deployment:
+
+```text Procfile
+worker: python bot.py
+```
+
+<Steps>
+  <Step title="Install Heroku CLI">
+    Install the Heroku CLI from [heroku.com](https://devcenter.heroku.com/articles/heroku-cli)
+  </Step>
+
+  <Step title="Login and Create App">
+    ```bash
+    heroku login
+    heroku create your-bot-name
+    ```
+  </Step>
+
+  <Step title="Set Environment Variables">
+    Configure your bot token:
+    
+    ```bash
+    heroku config:set TELEGRAM_BOT_TOKEN=your_token_here
+    heroku config:set DEFAULT_MODEL=llama
+    heroku config:set ENABLE_CONTINUOUS_LEARNING=true
+    ```
+  </Step>
+
+  <Step title="Deploy">
+    Push to Heroku:
+    
+    ```bash
+    git push heroku main
+    ```
+  </Step>
+
+  <Step title="Scale Worker">
+    Ensure the worker dyno is running:
+    
+    ```bash
+    heroku ps:scale worker=1
+    ```
+  </Step>
+
+  <Step title="View Logs">
+    Monitor logs:
+    
+    ```bash
+    heroku logs --tail
+    ```
+  </Step>
+</Steps>
+
+<Note>
+  Heroku's free tier has limitations. The bot requires substantial memory (2GB+) for AI models, so you may need a paid dyno.
+</Note>
+
+### Railway Deployment
+
+Railway provides excellent support for Python applications:
+
+<Steps>
+  <Step title="Connect Repository">
+    Connect your GitHub repository to Railway
+  </Step>
+
+  <Step title="Configure Environment">
+    Add environment variables in Railway dashboard:
+    - `TELEGRAM_BOT_TOKEN`
+    - `DEFAULT_MODEL`
+    - `ENABLE_CONTINUOUS_LEARNING`
+  </Step>
+
+  <Step title="Deploy">
+    Railway automatically detects the Python app and deploys it
+  </Step>
+</Steps>
+
+## Bot Initialization
+
+The bot performs critical initialization before accepting messages:
+
+```python bot.py:116-128
+async def initialize() -> bool:
+    """Initialize AI models and other components."""
+    try:
+        logger.info("Initializing AI models...")
+        success = await ai_handler.initialize_models()
+        if not success:
+            logger.error("Failed to initialize AI models")
+            return False
+        logger.info("AI models initialized successfully")
+        return True
+    except Exception as e:
+        logger.error(f"Error during initialization: {str(e)}")
+        return False
+```
+
+<Warning>
+  If model initialization fails, the bot will exit. Ensure you have sufficient memory and disk space for the models.
+</Warning>
+
+## Main Entry Point
+
+The bot's main function handles startup and error handling:
+
+```python bot.py:130-174
+def main() -> None:
+    """Start the bot."""
+    # Get the token from environment variable
+    token = os.getenv("TELEGRAM_BOT_TOKEN")
+    if not token:
+        logger.error("No token found! Make sure to set TELEGRAM_BOT_TOKEN in .env file")
+        return
+
+    # Create the Application and initialize models
+    application = Application.builder().token(token).build()
+    
+    # Initialize models before starting the bot
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    
+    try:
+        # Run initialization in the event loop
+        init_success = loop.run_until_complete(initialize())
+        if not init_success:
+            logger.error("Failed to initialize AI models. Exiting...")
+            return
+        logger.info("AI models initialized successfully")
+        
+        # Add handlers
+        application.add_handler(CommandHandler("start", start))
+        application.add_handler(CommandHandler("help", help_command))
+        application.add_handler(CommandHandler("about", about_command))
+        application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+
+        # Log startup
+        logger.info("MilesONerd AI Bot is starting...")
+        
+        # Run the bot
+        application.run_polling(allowed_updates=Update.ALL_TYPES)
+    finally:
+        loop.close()
+
+if __name__ == '__main__':
+    try:
+        main()
+    except KeyboardInterrupt:
+        logger.info("Bot stopped by user")
+    except Exception as e:
+        logger.error(f"Error running bot: {str(e)}")
+        raise  # Re-raise the exception for proper error handling
+```
+
+## Production Checklist
+
+Before deploying to production:
+
+<Steps>
+  <Step title="Security">
+    - [ ] Secure your `.env` file (never commit to git)
+    - [ ] Use environment variables for all secrets
+    - [ ] Enable HTTPS if exposing any web endpoints
+  </Step>
+
+  <Step title="Monitoring">
+    - [ ] Set up logging to a persistent location
+    - [ ] Configure error tracking (e.g., Sentry)
+    - [ ] Monitor memory and CPU usage
+  </Step>
+
+  <Step title="Resources">
+    - [ ] Ensure adequate RAM (16GB+ recommended)
+    - [ ] Provision sufficient disk space for models
+    - [ ] Configure GPU if available
+  </Step>
+
+  <Step title="Reliability">
+    - [ ] Set up automatic restart on failure
+    - [ ] Configure health checks
+    - [ ] Plan for model update strategy
+  </Step>
+</Steps>
+
+<Tip>
+  Start with Docker deployment for easier management and portability. You can always migrate to other platforms later.
+</Tip>
+
+## Next Steps
+
+- [Message Handling](/guides/message-handling) - Understand message processing
+- [Configuration](/guides/configuration) - Fine-tune bot settings

@@ -1,0 +1,275 @@
+---
+title: Message Handling
+description: Understand how MilesONerd AI processes and routes different types of messages
+icon: 'message'
+---
+
+## Overview
+
+MilesONerd AI uses intelligent message routing to determine the best AI model and processing strategy for each user message. The routing logic is implemented in the `handle_message` function in `bot.py`.
+
+## Message Processing Flow
+
+<Steps>
+  <Step title="Receive Message">
+    User sends a message to the bot via Telegram.
+  </Step>
+
+  <Step title="Send Typing Indicator">
+    Bot displays "typing..." action to provide user feedback:
+    
+    ```python bot.py:70
+    await update.message.chat.send_action(action="typing")
+    ```
+  </Step>
+
+  <Step title="Analyze Message Content">
+    Bot analyzes message length and keywords to determine routing strategy.
+  </Step>
+
+  <Step title="Route to Appropriate Handler">
+    Message is processed using the optimal model and parameters.
+  </Step>
+
+  <Step title="Send Response">
+    Generated response is sent back to the user.
+  </Step>
+</Steps>
+
+## Message Routing Logic
+
+The bot implements a sophisticated routing system based on message characteristics:
+
+### 1. Long Messages (>100 words)
+
+Messages with more than 100 words are summarized first, then processed:
+
+```python bot.py:73-81
+if len(user_message.split()) > 100:  # Long messages
+    # Use BART for summarization first
+    summary = await ai_handler.summarize_text(user_message)
+    # Then use Llama for response generation
+    response = await ai_handler.generate_response(
+        f"Based on this summary: {summary}\nGenerate a helpful response:",
+        model_key='llama',
+        max_length=200
+    )
+```
+
+<Info>
+  This two-step process ensures long messages are properly understood before generating a response. BART creates a concise summary, then Llama generates a contextual reply.
+</Info>
+
+### 2. Summarization Requests
+
+Messages containing keywords like "summarize", "summary", or "tldr":
+
+```python bot.py:82-84
+elif any(keyword in user_message.lower() for keyword in ['summarize', 'summary', 'tldr']):
+    # Explicit summarization request
+    response = await ai_handler.summarize_text(user_message)
+```
+
+**Example inputs:**
+- "Summarize this article: ..."
+- "Give me a summary of this text"
+- "tldr: [long text]"
+
+### 3. Chat-Related Queries
+
+Messages containing conversational keywords:
+
+```python bot.py:86-91
+elif any(keyword in user_message.lower() for keyword in ['chat', 'conversation', 'talk']):
+    response = await ai_handler.generate_response(
+        user_message,
+        model_key='llama',
+        max_length=200
+    )
+```
+
+<Tip>
+  Chat queries use a higher max_length (200) to provide more detailed conversational responses.
+</Tip>
+
+### 4. Short Questions (Less Than 10 Words)
+
+Brief queries get quick, concise responses:
+
+```python bot.py:92-98
+elif len(user_message.split()) < 10:  # Short queries
+    # Use Llama for quick responses to short queries
+    response = await ai_handler.generate_response(
+        user_message,
+        model_key='llama',
+        max_length=100
+    )
+```
+
+**Example inputs:**
+- "What is AI?"
+- "Hello"
+- "How are you?"
+
+### 5. Default Handler
+
+All other messages use the default processing:
+
+```python bot.py:99-105
+else:
+    # Default to Llama for general responses
+    response = await ai_handler.generate_response(
+        user_message,
+        model_key='llama',
+        max_length=150
+    )
+```
+
+## Complete Message Handler
+
+Here's the complete message handling function:
+
+```python bot.py:64-114
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle user messages using appropriate AI models based on content."""
+    try:
+        user_message = update.message.text.strip()
+        
+        # Send typing action while processing
+        await update.message.chat.send_action(action="typing")
+        
+        # Check message length and type to determine appropriate model
+        if len(user_message.split()) > 100:  # Long messages
+            # Use BART for summarization first
+            summary = await ai_handler.summarize_text(user_message)
+            # Then use Llama for response generation
+            response = await ai_handler.generate_response(
+                f"Based on this summary: {summary}\nGenerate a helpful response:",
+                model_key='llama',
+                max_length=200
+            )
+        elif any(keyword in user_message.lower() for keyword in ['summarize', 'summary', 'tldr']):
+            # Explicit summarization request
+            response = await ai_handler.summarize_text(user_message)
+        # Use Llama for conversational queries
+        elif any(keyword in user_message.lower() for keyword in ['chat', 'conversation', 'talk']):
+            response = await ai_handler.generate_response(
+                user_message,
+                model_key='llama',
+                max_length=200
+            )
+        elif len(user_message.split()) < 10:  # Short queries
+            # Use Llama for quick responses to short queries
+            response = await ai_handler.generate_response(
+                user_message,
+                model_key='llama',
+                max_length=100
+            )
+        else:
+            # Default to Llama for general responses
+            response = await ai_handler.generate_response(
+                user_message,
+                model_key='llama',
+                max_length=150
+            )
+        
+        await update.message.reply_text(response)
+        
+    except Exception as e:
+        logger.error(f"Error processing message: {str(e)}")
+        await update.message.reply_text(
+            "I apologize, but I encountered an error while processing your message. "
+            "Please try again later."
+        )
+```
+
+## Error Handling
+
+The bot includes comprehensive error handling:
+
+```python bot.py:109-114
+except Exception as e:
+    logger.error(f"Error processing message: {str(e)}")
+    await update.message.reply_text(
+        "I apologize, but I encountered an error while processing your message. "
+        "Please try again later."
+    )
+```
+
+<Note>
+  All errors are logged for debugging while providing a user-friendly error message to the user.
+</Note>
+
+## Response Generation Parameters
+
+Different message types use different `max_length` parameters:
+
+| Message Type | Max Length | Reasoning |
+|-------------|-----------|----------|
+| Short questions | 100 | Brief, direct answers |
+| Default messages | 150 | Balanced responses |
+| Long messages | 200 | Detailed explanations |
+| Chat queries | 200 | Conversational depth |
+
+## AI Handler Methods
+
+The message handler uses two primary AI handler methods:
+
+### generate_response()
+
+```python ai_handler.py:109-183
+async def generate_response(
+    self,
+    text: str,
+    model_key: Optional[str] = None,
+    max_length: int = 300,
+    temperature: float = 0.2,
+    top_p: float = 0.4,
+    max_attempts: int = 5
+) -> str:
+```
+
+**Parameters:**
+- `text` - Input text to generate response from
+- `model_key` - Model to use ('llama' or 'bart')
+- `max_length` - Maximum response length
+- `temperature` - Sampling temperature (0.2 = more focused)
+- `top_p` - Nucleus sampling parameter (0.4 = conservative)
+- `max_attempts` - Retry attempts for valid responses
+
+### summarize_text()
+
+```python ai_handler.py:184-227
+async def summarize_text(
+    self,
+    text: str,
+    max_length: int = 130,
+    min_length: int = 30
+) -> str:
+```
+
+**Parameters:**
+- `text` - Text to summarize
+- `max_length` - Maximum summary length (130 tokens)
+- `min_length` - Minimum summary length (30 tokens)
+
+<Warning>
+  The summarize_text method uses BART's beam search with `num_beams=4` for high-quality summaries. This may be slower than greedy decoding but produces better results.
+</Warning>
+
+## Message Handler Registration
+
+The message handler is registered in the bot application:
+
+```python bot.py:157
+application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+```
+
+This filter ensures:
+- Only TEXT messages are processed (no photos, videos, etc.)
+- COMMAND messages (starting with `/`) are excluded
+
+## Next Steps
+
+- [Deployment](/guides/deployment) - Learn how to deploy your bot
+- [API Reference](/api/ai-handler) - Detailed AI handler documentation

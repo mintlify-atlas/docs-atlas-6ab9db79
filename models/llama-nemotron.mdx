@@ -1,0 +1,264 @@
+---
+title: 'Llama 3.1-Nemotron'
+description: 'NVIDIA Llama 3.1-Nemotron-70B for conversational AI and text generation'
+icon: 'message-bot'
+---
+
+## Overview
+
+MilesONerd AI Bot uses **NVIDIA's Llama 3.1-Nemotron-70B-Instruct-HF** as its primary conversational AI model. This powerful 70-billion parameter model excels at:
+
+- Natural conversational responses
+- Context-aware dialogue
+- Question answering
+- Creative text generation
+- Instruction following
+
+<Info>
+Model ID: `nvidia/Llama-3.1-Nemotron-70B-Instruct-HF` on Hugging Face
+</Info>
+
+## Model Configuration
+
+The Llama model is configured as a causal language model for text generation:
+
+```python ai_handler.py
+'llama': {
+    'name': 'nvidia/Llama-3.1-Nemotron-70B-Instruct-HF',
+    'type': 'causal',
+    'task': 'text-generation'
+}
+```
+
+## Text Generation Method
+
+The `generate_response()` method is the core function for generating conversational responses using Llama 3.1-Nemotron.
+
+### Method Signature
+
+```python ai_handler.py
+async def generate_response(
+    self,
+    text: str,
+    model_key: Optional[str] = None,
+    max_length: int = 300,
+    temperature: float = 0.2,
+    top_p: float = 0.4,
+    max_attempts: int = 5
+) -> str:
+    """
+    Generate a response using the specified model.
+    
+    Args:
+        text: Input text to generate response from
+        model_key: Key of the model to use (default: None, uses default_model)
+        max_length: Maximum length of generated text
+        temperature: Sampling temperature (higher = more creative)
+        top_p: Nucleus sampling parameter
+        max_attempts: Maximum number of attempts to generate a valid response
+        
+    Returns:
+        str: Generated response text
+    """
+```
+
+## Generation Parameters
+
+<CardGroup cols={2}>
+  <Card title="max_length" icon="ruler">
+    **Default: 300**
+    
+    Maximum length of the generated response in tokens. Controls how long the bot's response can be.
+  </Card>
+  <Card title="temperature" icon="temperature-half">
+    **Default: 0.2**
+    
+    Controls randomness. Lower values (0.1-0.3) make responses more focused and deterministic. Higher values (0.7-1.0) increase creativity.
+  </Card>
+  <Card title="top_p" icon="filter">
+    **Default: 0.4**
+    
+    Nucleus sampling parameter. Only tokens with cumulative probability up to `top_p` are considered. Lower values make responses more focused.
+  </Card>
+  <Card title="max_attempts" icon="rotate">
+    **Default: 5**
+    
+    Number of generation attempts if the output is invalid or repetitive. Ensures quality responses.
+  </Card>
+</CardGroup>
+
+<Tip>
+The conservative defaults (`temperature=0.2`, `top_p=0.4`) ensure the bot provides reliable, coherent responses while minimizing hallucinations.
+</Tip>
+
+## Complete Implementation
+
+Here's the full implementation of the text generation method:
+
+```python ai_handler.py
+async def generate_response(
+    self,
+    text: str,
+    model_key: Optional[str] = None,
+    max_length: int = 300,
+    temperature: float = 0.2,
+    top_p: float = 0.4,
+    max_attempts: int = 5
+) -> str:
+    """
+    Generate a response using the specified model.
+    
+    Args:
+        text: Input text to generate response from
+        model_key: Key of the model to use (default: None, uses default_model)
+        max_length: Maximum length of generated text
+        temperature: Sampling temperature (higher = more creative)
+        top_p: Nucleus sampling parameter
+        max_attempts: Maximum number of attempts to generate a valid response
+        
+    Returns:
+        str: Generated response text
+    """
+    try:
+        model_key = model_key or self.default_model
+        
+        if model_key not in self.models:
+            raise ValueError(f"Model {model_key} not found")
+        
+        model = self.models[model_key]
+        tokenizer = self.tokenizers[model_key]
+        
+        # Prepare input
+        inputs = tokenizer(
+            text,
+            return_tensors="pt",
+            truncation=True,
+            max_length=512,
+            padding=True
+        ).to(model.device)
+        
+        # Attempts to generate a response
+        attempts = 0
+        response = ""
+        
+        while attempts < max_attempts:
+            attempts += 1
+            
+            # Generate response
+            with torch.no_grad():
+                outputs = model.generate(
+                    **inputs,
+                    max_length=max_length,
+                    num_return_sequences=1,
+                    temperature=temperature,
+                    top_p=top_p,
+                    do_sample=True,
+                    pad_token_id=tokenizer.pad_token_id,
+                    eos_token_id=tokenizer.eos_token_id
+                )
+            
+            # Decode response
+            response = tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
+            
+            # Check that the answer is not repetitive or meaningless
+            if len(response.split()) > 3 and response != text:  # Check if the response is valid
+                break  # If the response is valid, exit the loop
+            
+        if attempts == max_attempts and (not response or response == text):
+            return "Sorry, I could not generate a meaningful response after multiple attempts."
+    
+    except Exception as e:
+        logger.error(f"Error generating response: {str(e)}")
+        return f"I apologize, but I encountered an error while processing your request. Please try again."
+```
+
+## Generation Workflow
+
+<Accordion title="Step-by-Step Process">
+  1. **Model Selection**: Use specified model or default to Llama
+  2. **Input Tokenization**: Convert text to tokens with truncation (max 512 tokens)
+  3. **Device Transfer**: Move inputs to the same device as the model (CPU/GPU)
+  4. **Generation Loop**: Attempt up to 5 times to generate a valid response
+  5. **Token Generation**: Use `model.generate()` with specified parameters
+  6. **Decoding**: Convert generated tokens back to text
+  7. **Validation**: Check if response is meaningful (>3 words, different from input)
+  8. **Return**: Provide generated response or fallback message
+</Accordion>
+
+## Quality Assurance
+
+The bot implements several quality control mechanisms:
+
+<CardGroup cols={2}>
+  <Card title="Retry Logic" icon="rotate">
+    Up to 5 attempts to generate a valid response if the output is repetitive or meaningless
+  </Card>
+  <Card title="Validation Checks" icon="check">
+    Ensures responses have >3 words and differ from the input prompt
+  </Card>
+  <Card title="Error Handling" icon="shield">
+    Graceful error handling with user-friendly fallback messages
+  </Card>
+  <Card title="No Gradient" icon="bolt">
+    Uses `torch.no_grad()` for efficient inference without gradient computation
+  </Card>
+</CardGroup>
+
+<Note>
+The validation logic at `ai_handler.py:174` ensures that only meaningful, non-repetitive responses are returned to users.
+</Note>
+
+## Use Cases in the Bot
+
+Llama 3.1-Nemotron is the primary model for all conversational interactions:
+
+### General Chat
+```python
+response = await ai_handler.generate_response(
+    text="What is machine learning?",
+    max_length=300,
+    temperature=0.2,
+    top_p=0.4
+)
+```
+
+### Creative Writing (Higher Temperature)
+```python
+response = await ai_handler.generate_response(
+    text="Write a short story about AI",
+    max_length=500,
+    temperature=0.7,  # More creative
+    top_p=0.9
+)
+```
+
+### Focused Q&A (Lower Temperature)
+```python
+response = await ai_handler.generate_response(
+    text="What is the capital of France?",
+    max_length=100,
+    temperature=0.1,  # More deterministic
+    top_p=0.3
+)
+```
+
+<Warning>
+The 70B parameter model requires significant computational resources. GPU acceleration is strongly recommended for acceptable response times.
+</Warning>
+
+## Performance Optimization
+
+- **Mixed Precision**: Uses `float16` on GPU to reduce memory usage by 50%
+- **Automatic Device Mapping**: Distributes model across available GPUs if needed
+- **Input Truncation**: Limits input to 512 tokens to prevent memory overflow
+- **No Gradient Computation**: Inference-only mode for faster generation
+
+<Tip>
+For faster responses, consider reducing `max_length` or using a smaller model variant if your use case allows it.
+</Tip>
+
+## Next Steps
+
+<Card title="Explore BART Summarization" icon="arrow-right" href="/models/bart-summarization">
+  Learn how the bot uses BART for intelligent text summarization
+</Card>

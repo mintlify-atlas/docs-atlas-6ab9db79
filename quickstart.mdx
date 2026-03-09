@@ -1,80 +1,451 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quick Start
+description: Get your MilesONerd AI Telegram bot up and running in minutes with this step-by-step guide.
 ---
 
-## Get started in three steps
+# Quick Start Guide
 
-Get your documentation site running locally and make your first customization.
+This guide will help you set up and run your MilesONerd AI Telegram bot in just a few minutes. By the end, you'll have a fully functional AI-powered bot responding to messages on Telegram.
 
-### Step 1: Set up your local environment
+<Steps>
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+### Prerequisites
 
-### Step 2: Deploy your changes
+Before you begin, ensure you have the following:
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
-
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
-
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 3: Go live
-
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
-
-## Next steps
-
-Now that you have your docs running, explore these key features:
-
-<CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
-</CardGroup>
+- **Python 3.8 or higher** installed on your system
+- **pip** (Python package manager)
+- A **Telegram account**
+- **Git** (for cloning the repository)
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+**GPU Recommended**: While the bot can run on CPU, using a GPU with at least 40GB VRAM is highly recommended for optimal performance with the Llama 3.1-Nemotron 70B model.
 </Note>
+
+### Get Your Telegram Bot Token
+
+You need a bot token from Telegram to connect your bot:
+
+1. Open Telegram and search for **@BotFather**
+2. Start a chat and send the command `/newbot`
+3. Follow the prompts to name your bot:
+   - **Name**: MilesONerd AI (or your preferred name)
+   - **Username**: Must end in "bot" (e.g., `milesonerd_ai_bot`)
+4. **Copy the bot token** provided by BotFather - you'll need this in the next steps
+
+<Tip>
+Save your bot token securely. You'll use it in the configuration step. The token looks like: `1234567890:ABCdefGHIjklMNOpqrsTUVwxyz`
+</Tip>
+
+### Clone the Repository
+
+Clone the MilesONerd AI bot repository to your local machine:
+
+```bash
+git clone https://github.com/MilesONerd/telegram-bot.git
+cd telegram-bot
+```
+
+### Install Dependencies
+
+Install all required Python packages using pip:
+
+```bash
+pip install -r requirements.txt
+```
+
+<Info>
+The installation includes:
+- `python-telegram-bot` (21.10) - Telegram Bot API wrapper
+- `transformers` (4.48.0) - Hugging Face model library
+- `torch` (2.5.1) - PyTorch for model inference
+- `python-dotenv` (1.0.1) - Environment variable management
+- Additional dependencies for model optimization
+</Info>
+
+This may take several minutes as it installs PyTorch, Transformers, and other dependencies.
+
+### Configure Environment Variables
+
+Set up your bot configuration:
+
+1. **Create a `.env` file** in the project root:
+
+```bash
+cp .env.example .env
+```
+
+If `.env.example` doesn't exist, create `.env` manually:
+
+```bash
+touch .env
+```
+
+2. **Edit the `.env` file** and add your Telegram bot token:
+
+```bash .env
+# Required: Your Telegram Bot Token from @BotFather
+TELEGRAM_BOT_TOKEN=your_bot_token_here
+
+# Optional: Default AI model to use
+DEFAULT_MODEL=llama
+
+# Optional: Enable continuous learning (future feature)
+ENABLE_CONTINUOUS_LEARNING=true
+
+# Optional: Google Search API key (future feature)
+# SERPAPI_API_KEY=your_serpapi_key_here
+```
+
+<Warning>
+**Security**: Never commit your `.env` file to version control. The token grants full access to your bot.
+</Warning>
+
+### Start the Bot
+
+Launch your bot with a single command:
+
+```bash
+python bot.py
+```
+
+You should see output indicating the models are being initialized:
+
+```
+2026-03-09 10:30:45 - __main__ - INFO - Initializing AI models...
+2026-03-09 10:30:45 - ai_handler - INFO - Starting model initialization...
+2026-03-09 10:30:45 - ai_handler - INFO - CUDA available: True
+2026-03-09 10:30:45 - ai_handler - INFO - GPU Device: NVIDIA A100-SXM4-80GB
+2026-03-09 10:30:46 - ai_handler - INFO - Loading BART model: facebook/bart-large
+2026-03-09 10:30:52 - ai_handler - INFO - BART tokenizer loaded successfully
+2026-03-09 10:30:58 - ai_handler - INFO - BART model loaded successfully
+2026-03-09 10:30:58 - ai_handler - INFO - Loading Llama model: nvidia/Llama-3.1-Nemotron-70B-Instruct-HF
+2026-03-09 10:31:15 - ai_handler - INFO - Llama tokenizer loaded successfully
+2026-03-09 10:32:45 - ai_handler - INFO - Llama model loaded successfully
+2026-03-09 10:32:45 - ai_handler - INFO - All models initialized successfully
+2026-03-09 10:32:45 - __main__ - INFO - MilesONerd AI Bot is starting...
+```
+
+<Note>
+**First Run**: The first time you run the bot, it will download the AI models from Hugging Face (~150GB total). This can take 10-30 minutes depending on your internet connection. Subsequent runs will use cached models.
+</Note>
+
+### Test Your Bot
+
+Now that your bot is running, let's test it on Telegram:
+
+1. **Open Telegram** on your phone or desktop
+2. **Search for your bot** using the username you created (e.g., `@milesonerd_ai_bot`)
+3. **Start a conversation** by clicking "Start" or sending `/start`
+
+You should receive a welcome message:
+
+```
+Hi @yourusername! I'm MilesONerd AI, your intelligent assistant.
+I can help you with various tasks using advanced AI models and internet search.
+Use /help to see available commands.
+```
+
+### Try Basic Commands
+
+Test the bot's functionality with these commands:
+
+<CodeGroup>
+
+```bash /start
+/start
+```
+
+```bash /help
+/help
+```
+
+```bash /about
+/about
+```
+
+</CodeGroup>
+
+**Expected responses:**
+
+<Tabs>
+  <Tab title="/start">
+    ```
+    Hi @yourusername! I'm MilesONerd AI, your intelligent assistant.
+    I can help you with various tasks using advanced AI models and internet search.
+    Use /help to see available commands.
+    ```
+  </Tab>
+  <Tab title="/help">
+    ```
+    Available commands:
+    /start - Start the bot
+    /help - Show this help message
+    /about - Learn more about MilesONerd AI
+
+    Message handling:
+    - Short questions: Quick responses using lightweight model
+    - Long messages: Summarization and detailed response
+    - Include 'summarize' or 'tldr' for text summarization
+    - Chat-related queries: Optimized conversation handling
+    - Regular messages: Comprehensive AI-powered responses
+
+    You can send me any message, and I'll process it using the most appropriate AI model!
+    ```
+  </Tab>
+  <Tab title="/about">
+    ```
+    MilesONerd AI is an intelligent assistant powered by advanced AI models and internet search capabilities.
+
+    Features:
+    - Advanced language understanding
+    - Internet search integration
+    - Continuous learning from interactions
+    - Multiple AI models for different tasks
+
+    Created with ❤️ using python-telegram-bot and Hugging Face models.
+    ```
+  </Tab>
+</Tabs>
+
+### Test Message Processing
+
+Try different types of messages to see how the bot responds:
+
+**1. Short Question (uses Llama 3.1-Nemotron)**
+```
+What is Python?
+```
+
+**2. Conversation Request (uses Llama 3.1-Nemotron)**
+```
+Let's chat about artificial intelligence
+```
+
+**3. Summarization Request (uses BART)**
+```
+Please summarize this: [paste a long article or text]
+```
+
+or
+
+```
+tldr: [paste a long article or text]
+```
+
+**4. Long Message (uses BART + Llama 3.1-Nemotron)**
+
+Send a message with more than 100 words. The bot will:
+1. Summarize it using BART
+2. Generate a response using Llama based on the summary
+
+</Steps>
+
+## Understanding the Bot's Behavior
+
+The bot intelligently routes your messages to different AI models based on content analysis:
+
+### Message Routing Logic
+
+```python
+# From bot.py - How the bot decides which model to use
+
+if len(user_message.split()) > 100:
+    # Long messages: BART summarization + Llama response
+    summary = await ai_handler.summarize_text(user_message)
+    response = await ai_handler.generate_response(
+        f"Based on this summary: {summary}\nGenerate a helpful response:",
+        model_key='llama',
+        max_length=200
+    )
+
+elif 'summarize' in user_message.lower() or 'tldr' in user_message.lower():
+    # Explicit summarization: BART only
+    response = await ai_handler.summarize_text(user_message)
+
+elif 'chat' in user_message.lower() or 'conversation' in user_message.lower():
+    # Conversation: Llama with extended length
+    response = await ai_handler.generate_response(
+        user_message,
+        model_key='llama',
+        max_length=200
+    )
+
+elif len(user_message.split()) < 10:
+    # Short queries: Llama with limited length
+    response = await ai_handler.generate_response(
+        user_message,
+        model_key='llama',
+        max_length=100
+    )
+
+else:
+    # Default: Llama with standard length
+    response = await ai_handler.generate_response(
+        user_message,
+        model_key='llama',
+        max_length=150
+    )
+```
+
+### Model Selection Table
+
+| Message Type | Word Count | Keywords | AI Model Used | Max Length |
+|--------------|------------|----------|---------------|------------|
+| Long message | > 100 words | - | BART → Llama | 200 tokens |
+| Summarization | Any | "summarize", "tldr", "summary" | BART | 130 tokens |
+| Conversation | Any | "chat", "conversation", "talk" | Llama | 200 tokens |
+| Short query | < 10 words | - | Llama | 100 tokens |
+| Default | 10-100 words | - | Llama | 150 tokens |
+
+## Troubleshooting
+
+### Bot Token Error
+
+```
+ERROR - No token found! Make sure to set TELEGRAM_BOT_TOKEN in .env file
+```
+
+**Solution**: Verify your `.env` file exists and contains the correct token:
+
+```bash
+cat .env
+```
+
+Ensure the line reads:
+```
+TELEGRAM_BOT_TOKEN=your_actual_token_here
+```
+
+### Model Initialization Failed
+
+```
+ERROR - Failed to initialize AI models. Exiting...
+```
+
+**Possible causes:**
+- Insufficient GPU/CPU memory
+- Network issues downloading models
+- Missing dependencies
+
+**Solutions:**
+1. **Check GPU memory:**
+```bash
+nvidia-smi
+```
+
+2. **Verify PyTorch installation:**
+```bash
+python -c "import torch; print(torch.cuda.is_available())"
+```
+
+3. **Reinstall dependencies:**
+```bash
+pip install -r requirements.txt --upgrade
+```
+
+### Out of Memory Error
+
+```
+RuntimeError: CUDA out of memory
+```
+
+**Solution**: The Llama 3.1-Nemotron 70B model requires significant memory. Options:
+
+1. **Use a smaller model** (modify `ai_handler.py:35`)
+2. **Enable CPU offloading** (already configured with `device_map='auto'`)
+3. **Use quantization** (future enhancement)
+
+### Bot Not Responding
+
+**Checklist:**
+- Is `bot.py` running without errors?
+- Did you use the correct bot username in Telegram?
+- Is your internet connection stable?
+- Check logs for error messages
+
+### Model Download Takes Too Long
+
+The models are large (~150GB combined). To monitor progress:
+
+```bash
+watch -n 1 du -sh ~/.cache/huggingface/
+```
+
+<Tip>
+You can manually pre-download models using the `huggingface-cli`:
+```bash
+huggingface-cli download nvidia/Llama-3.1-Nemotron-70B-Instruct-HF
+huggingface-cli download facebook/bart-large
+```
+</Tip>
+
+## Configuration Options
+
+### Environment Variables
+
+Customize your bot's behavior by editing `.env`:
+
+```bash .env
+# Required
+TELEGRAM_BOT_TOKEN=your_bot_token_here
+
+# Optional: Choose default model (llama or bart)
+DEFAULT_MODEL=llama
+
+# Optional: Enable/disable continuous learning
+ENABLE_CONTINUOUS_LEARNING=true
+
+# Optional: Future feature - internet search
+SERPAPI_API_KEY=your_api_key_here
+```
+
+### Model Parameters
+
+You can adjust generation parameters in `ai_handler.py`:
+
+```python
+# Default parameters in generate_response() at line 109
+temperature: float = 0.2  # Lower = more focused, Higher = more creative
+top_p: float = 0.4        # Nucleus sampling threshold
+max_length: int = 300     # Maximum response length in tokens
+max_attempts: int = 5     # Retry attempts for valid responses
+```
+
+## Next Steps
+
+Now that your bot is running, explore more:
+
+<CardGroup cols={2}>
+  <Card title="API Reference" icon="book" href="/api/bot">
+    Learn about all available commands and functions
+  </Card>
+  <Card title="Advanced Configuration" icon="gear" href="/guides/configuration">
+    Customize model parameters and behavior
+  </Card>
+  <Card title="Deployment Guide" icon="cloud" href="/guides/deployment">
+    Deploy your bot to production servers
+  </Card>
+  <Card title="Model Details" icon="brain" href="/models/overview">
+    Contribute to the MilesONerd AI project
+  </Card>
+</CardGroup>
+
+## Getting Help
+
+If you encounter issues:
+
+- Check the [GitHub Issues](https://github.com/MilesONerd/telegram-bot/issues)
+- Review the [source code](https://github.com/MilesONerd/telegram-bot)
+- Contact the author: [MilesONerd](https://milesonerd.github.io)
+
+<Note>
+**Logging**: The bot outputs detailed logs to the console. Use these logs to diagnose issues:
+```bash
+python bot.py 2>&1 | tee bot.log
+```
+</Note>
+
+---
+
+**Congratulations!** You now have a fully functional AI-powered Telegram bot. Start chatting and explore its capabilities!

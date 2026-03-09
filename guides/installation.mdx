@@ -1,0 +1,133 @@
+---
+title: Installation
+description: Step-by-step guide to installing MilesONerd AI Telegram Bot
+icon: 'download'
+---
+
+## Requirements
+
+Before installing MilesONerd AI Telegram Bot, ensure you have the following prerequisites:
+
+- **Python 3.8 or higher** - The bot requires Python 3.8+
+- **pip** - Python package manager (usually comes with Python)
+- **Telegram Bot Token** - Obtain from [@BotFather](https://t.me/BotFather) on Telegram
+- **Sufficient disk space** - AI models require several GB of storage
+- **GPU (optional)** - NVIDIA GPU with CUDA support for faster inference
+
+<Note>
+  The bot uses Llama 3.1-Nemotron (70B) and BART models which are resource-intensive. Ensure you have adequate RAM (16GB+ recommended) and storage space.
+</Note>
+
+## Installation Steps
+
+<Steps>
+  <Step title="Clone the Repository">
+    Clone the MilesONerd AI Telegram Bot repository from GitHub:
+    
+    ```bash
+    git clone https://github.com/MilesONerd/telegram-bot.git
+    cd telegram-bot
+    ```
+  </Step>
+
+  <Step title="Install Python Dependencies">
+    Install all required Python packages using pip:
+    
+    <CodeGroup>
+    ```bash Standard Installation
+    pip install -r requirements.txt
+    ```
+
+    ```bash Virtual Environment (Recommended)
+    # Create virtual environment
+    python -m venv venv
+    
+    # Activate virtual environment
+    # On Linux/Mac:
+    source venv/bin/activate
+    # On Windows:
+    venv\Scripts\activate
+    
+    # Install dependencies
+    pip install -r requirements.txt
+    ```
+    </CodeGroup>
+    
+    <Info>
+      The `requirements.txt` includes essential packages like `python-telegram-bot`, `transformers`, `torch`, and model dependencies.
+    </Info>
+  </Step>
+
+  <Step title="Configure Environment Variables">
+    Copy the example environment file and configure your settings:
+    
+    ```bash
+    cp .env.example .env
+    ```
+    
+    Edit the `.env` file with your credentials (see [Configuration](/guides/configuration) for details).
+  </Step>
+
+  <Step title="Verify Installation">
+    Ensure all dependencies are correctly installed:
+    
+    ```bash
+    python -c "import telegram, transformers, torch; print('All packages installed successfully!')"
+    ```
+  </Step>
+</Steps>
+
+## Key Dependencies
+
+The bot relies on these core packages:
+
+```txt requirements.txt
+python-telegram-bot==21.10    # Telegram Bot API wrapper
+transformers==4.48.0          # Hugging Face Transformers
+torch==2.5.1                  # PyTorch for model inference
+python-dotenv==1.0.1          # Environment variable management
+huggingface-hub==0.27.1       # Model downloading and caching
+```
+
+## GPU Support
+
+If you have an NVIDIA GPU with CUDA support, the bot will automatically detect and use it for faster inference:
+
+<Tip>
+  The AI handler checks for CUDA availability at startup and automatically configures the models to use GPU if available. No additional configuration needed!
+</Tip>
+
+CUDA-related packages are included in requirements.txt:
+
+```txt
+nvidia-cuda-runtime-cu12==12.4.127
+nvidia-cudnn-cu12==9.1.0.70
+triton==3.1.0
+```
+
+## Troubleshooting
+
+<Accordion title="ImportError: No module named 'telegram'">
+  This means the python-telegram-bot package wasn't installed correctly. Run:
+  ```bash
+  pip install python-telegram-bot==21.10
+  ```
+</Accordion>
+
+<Accordion title="CUDA out of memory errors">
+  The models are large and may exceed available GPU memory. The bot automatically falls back to CPU if GPU memory is insufficient. You can also set smaller batch sizes or use model quantization.
+</Accordion>
+
+<Accordion title="Models downloading slowly">
+  The first run downloads large model files from Hugging Face Hub. This is normal and only happens once. Models are cached locally for future use.
+</Accordion>
+
+<Warning>
+  Never commit your `.env` file containing your bot token to version control. Keep it private and secure.
+</Warning>
+
+## Next Steps
+
+After installation, proceed to:
+- [Configuration](/guides/configuration) - Set up your bot token and model settings
+- [Deployment](/guides/deployment) - Learn how to deploy your bot

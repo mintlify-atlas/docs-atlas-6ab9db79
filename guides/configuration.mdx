@@ -1,0 +1,214 @@
+---
+title: Configuration
+description: Configure your MilesONerd AI Telegram Bot with environment variables and model settings
+icon: 'gear'
+---
+
+## Environment Variables
+
+MilesONerd AI uses environment variables for configuration. All settings are stored in a `.env` file in the project root.
+
+### Required Variables
+
+<CodeGroup>
+```bash .env.example
+# Telegram Bot Token (get it from @BotFather)
+TELEGRAM_BOT_TOKEN=your_bot_token_here
+
+# API Keys (will be used in future implementations)
+SERPAPI_API_KEY=your_serpapi_key_here
+
+# Model Configuration (will be used in future implementations)
+DEFAULT_MODEL=mixtral-8x7b-v0.1
+ENABLE_CONTINUOUS_LEARNING=true
+```
+
+```bash .env (example)
+TELEGRAM_BOT_TOKEN=1234567890:ABCdefGHIjklMNOpqrsTUVwxyz
+SERPAPI_API_KEY=your_serpapi_key_here
+DEFAULT_MODEL=llama
+ENABLE_CONTINUOUS_LEARNING=true
+```
+</CodeGroup>
+
+### Variable Descriptions
+
+#### TELEGRAM_BOT_TOKEN (Required)
+
+Your Telegram Bot API token. This is mandatory for the bot to function.
+
+<Steps>
+  <Step title="Open Telegram and search for @BotFather">
+    [@BotFather](https://t.me/BotFather) is Telegram's official bot for creating and managing bots.
+  </Step>
+
+  <Step title="Create a new bot">
+    Send the `/newbot` command to @BotFather and follow the prompts:
+    - Choose a name for your bot (e.g., "MilesONerd AI Assistant")
+    - Choose a username ending in "bot" (e.g., "milesonerd_ai_bot")
+  </Step>
+
+  <Step title="Copy your token">
+    @BotFather will provide your bot token. It looks like:
+    ```
+    1234567890:ABCdefGHIjklMNOpqrsTUVwxyz
+    ```
+    Copy this token to your `.env` file.
+  </Step>
+</Steps>
+
+<Warning>
+  Keep your bot token private! Anyone with this token can control your bot. Never commit it to version control or share it publicly.
+</Warning>
+
+#### SERPAPI_API_KEY (Optional)
+
+API key for SerpAPI Google Search integration. Currently planned for future implementation.
+
+<Info>
+  This feature is not yet implemented in the current version. You can leave this blank for now.
+</Info>
+
+#### DEFAULT_MODEL (Optional)
+
+Specifies which AI model to use by default. Options:
+- `llama` - Llama 3.1-Nemotron (default)
+- `bart` - BART model
+
+The bot uses this setting in `ai_handler.py`:
+
+```python ai_handler.py:46
+self.default_model = os.getenv('DEFAULT_MODEL', 'llama')
+```
+
+<Tip>
+  Leave this as `llama` for best general-purpose performance. BART is automatically used for summarization tasks.
+</Tip>
+
+#### ENABLE_CONTINUOUS_LEARNING (Optional)
+
+Enables or disables continuous learning capabilities. Values: `true` or `false` (default: `true`).
+
+```python ai_handler.py:47
+self.enable_learning = os.getenv('ENABLE_CONTINUOUS_LEARNING', 'true').lower() == 'true'
+```
+
+<Note>
+  Continuous learning features are planned for future implementation.
+</Note>
+
+## Model Configuration
+
+The bot uses two AI models configured in `ai_handler.py`:
+
+### Llama 3.1-Nemotron
+
+Used for text generation and conversational responses:
+
+```python ai_handler.py:34-38
+'llama': {
+    'name': 'nvidia/Llama-3.1-Nemotron-70B-Instruct-HF',
+    'type': 'causal',
+    'task': 'text-generation'
+}
+```
+
+**Capabilities:**
+- General text generation
+- Conversational responses
+- Short and long-form answers
+- Context-aware replies
+
+### BART
+
+Used for text summarization:
+
+```python ai_handler.py:39-43
+'bart': {
+    'name': 'facebook/bart-large',
+    'type': 'conditional',
+    'task': 'summarization'
+}
+```
+
+**Capabilities:**
+- Text summarization
+- Long message condensation
+- TL;DR generation
+
+## Loading Configuration
+
+The bot loads environment variables using `python-dotenv`:
+
+```python bot.py:4,10-11
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+```
+
+This automatically reads the `.env` file when the bot starts.
+
+## Verifying Configuration
+
+The bot validates critical configuration on startup:
+
+```python bot.py:133-136
+# Get the token from environment variable
+token = os.getenv("TELEGRAM_BOT_TOKEN")
+if not token:
+    logger.error("No token found! Make sure to set TELEGRAM_BOT_TOKEN in .env file")
+    return
+```
+
+<Warning>
+  If `TELEGRAM_BOT_TOKEN` is not set, the bot will exit with an error message. Ensure this variable is configured before starting the bot.
+</Warning>
+
+## GPU Configuration
+
+The AI handler automatically detects GPU availability:
+
+```python ai_handler.py:57-60
+logger.info(f"CUDA available: {torch.cuda.is_available()}")
+if torch.cuda.is_available():
+    logger.info(f"GPU Device: {torch.cuda.get_device_name(0)}")
+    logger.info(f"Available GPU memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.2f} GB")
+```
+
+Models automatically use GPU if available:
+
+```python ai_handler.py:73-75
+self.models['bart'] = BartForConditionalGeneration.from_pretrained(
+    self.model_configs['bart']['name'],
+    device_map='auto' if torch.cuda.is_available() else None,
+    torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+    local_files_only=False
+)
+```
+
+<Tip>
+  No manual GPU configuration needed! The bot automatically uses GPU (float16) if available, otherwise falls back to CPU (float32).
+</Tip>
+
+## Example Configuration File
+
+Here's a complete example `.env` file:
+
+```bash .env
+# Bot credentials
+TELEGRAM_BOT_TOKEN=1234567890:ABCdefGHIjklMNOpqrsTUVwxyz
+
+# Future features
+SERPAPI_API_KEY=
+
+# Model settings
+DEFAULT_MODEL=llama
+ENABLE_CONTINUOUS_LEARNING=true
+```
+
+## Next Steps
+
+After configuration:
+- [Message Handling](/guides/message-handling) - Learn how the bot processes messages
+- [Deployment](/guides/deployment) - Deploy your configured bot

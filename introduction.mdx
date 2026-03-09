@@ -1,0 +1,303 @@
+---
+title: Introduction
+description: Learn about MilesONerd AI, an intelligent Telegram bot powered by advanced AI models for natural language understanding and text generation.
+---
+
+# Welcome to MilesONerd AI
+
+MilesONerd AI is an intelligent Telegram bot that combines the power of state-of-the-art language models to provide advanced text generation, summarization, and conversational capabilities. Built with Python and Hugging Face Transformers, it delivers intelligent responses tailored to your needs.
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Get your bot up and running in minutes
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/bot">
+    Explore the bot's commands and capabilities
+  </Card>
+</CardGroup>
+
+## What is MilesONerd AI?
+
+MilesONerd AI is a Telegram bot that leverages multiple AI models to handle different types of user requests intelligently. Whether you need to summarize long text, have a conversation, or get quick answers to questions, the bot automatically selects the most appropriate AI model for the task.
+
+### Key Capabilities
+
+<CardGroup cols={3}>
+  <Card title="Text Generation" icon="message">
+    Generate intelligent responses using Llama 3.1-Nemotron for natural conversations
+  </Card>
+  <Card title="Summarization" icon="compress">
+    Summarize long messages and documents using BART
+  </Card>
+  <Card title="Smart Routing" icon="brain">
+    Automatically select the best AI model based on message type and length
+  </Card>
+</CardGroup>
+
+## AI Models Used
+
+MilesONerd AI uses two powerful models from Hugging Face:
+
+### Llama 3.1-Nemotron (NVIDIA)
+
+**Model:** `nvidia/Llama-3.1-Nemotron-70B-Instruct-HF`
+
+A 70-billion parameter causal language model fine-tuned by NVIDIA for instruction-following and conversational AI. This model handles:
+
+- General conversation and chat queries
+- Question answering
+- Short-form and long-form text generation
+- Contextual understanding
+
+```python
+# Model configuration from ai_handler.py:34-38
+'llama': {
+    'name': 'nvidia/Llama-3.1-Nemotron-70B-Instruct-HF',
+    'type': 'causal',
+    'task': 'text-generation'
+}
+```
+
+### BART (Facebook)
+
+**Model:** `facebook/bart-large`
+
+A denoising autoencoder for pretraining sequence-to-sequence models, optimized for text summarization. This model handles:
+
+- Long message summarization (>100 words)
+- TL;DR generation
+- Content condensation
+- Extractive and abstractive summarization
+
+```python
+# Model configuration from ai_handler.py:39-43
+'bart': {
+    'name': 'facebook/bart-large',
+    'type': 'conditional',
+    'task': 'summarization'
+}
+```
+
+## Architecture Overview
+
+MilesONerd AI follows a modular architecture separating bot logic from AI model handling:
+
+```
+┌─────────────────────────────────────────────┐
+│           Telegram Bot Layer                │
+│         (bot.py - Commands & Routing)       │
+└─────────────────┬───────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────┐
+│         Message Processing Layer            │
+│    (Intelligent Model Selection Logic)      │
+└─────────────────┬───────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────┐
+│          AI Handler Layer                   │
+│   (ai_handler.py - Model Management)        │
+├─────────────────────────────────────────────┤
+│  • Model initialization                     │
+│  • Response generation                      │
+│  • Text summarization                       │
+│  • GPU/CPU optimization                     │
+└─────────────────┬───────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────┐
+│           AI Models (Hugging Face)          │
+│  • Llama 3.1-Nemotron (70B)                │
+│  • BART (Large)                             │
+└─────────────────────────────────────────────┘
+```
+
+### Core Components
+
+**1. Bot Layer (`bot.py`)**
+
+Handles Telegram integration and command routing:
+
+- Command handlers: `/start`, `/help`, `/about`
+- Message routing based on content analysis
+- User interaction and response delivery
+
+**2. AI Handler (`ai_handler.py`)**
+
+Manages AI model lifecycle and operations:
+
+- Async model initialization
+- GPU/CPU device management
+- Text generation and summarization
+- Error handling and fallback mechanisms
+
+## Intelligent Message Processing
+
+The bot uses sophisticated logic to route messages to the appropriate AI model:
+
+```python
+# From bot.py:72-105 - Message routing logic
+if len(user_message.split()) > 100:  # Long messages
+    # Use BART for summarization first
+    summary = await ai_handler.summarize_text(user_message)
+    # Then use Llama for response generation
+    response = await ai_handler.generate_response(
+        f"Based on this summary: {summary}\nGenerate a helpful response:",
+        model_key='llama',
+        max_length=200
+    )
+elif any(keyword in user_message.lower() for keyword in ['summarize', 'summary', 'tldr']):
+    # Explicit summarization request
+    response = await ai_handler.summarize_text(user_message)
+elif any(keyword in user_message.lower() for keyword in ['chat', 'conversation', 'talk']):
+    # Use Llama for conversational queries
+    response = await ai_handler.generate_response(
+        user_message,
+        model_key='llama',
+        max_length=200
+    )
+elif len(user_message.split()) < 10:  # Short queries
+    # Use Llama for quick responses
+    response = await ai_handler.generate_response(
+        user_message,
+        model_key='llama',
+        max_length=100
+    )
+else:
+    # Default to Llama for general responses
+    response = await ai_handler.generate_response(
+        user_message,
+        model_key='llama',
+        max_length=150
+    )
+```
+
+<Note>
+**Smart Routing**: The bot analyzes message length and keywords to determine whether to use Llama for generation, BART for summarization, or a combination of both.
+</Note>
+
+## Key Features
+
+### 1. Multi-Model Architecture
+
+Leverage different AI models for different tasks:
+- **Llama 3.1-Nemotron** for conversational AI and text generation
+- **BART** for text summarization
+- Automatic model selection based on message characteristics
+
+### 2. GPU Acceleration Support
+
+Optimized for both GPU and CPU environments:
+
+```python
+# From ai_handler.py:73-76 - Device optimization
+self.models['bart'] = BartForConditionalGeneration.from_pretrained(
+    self.model_configs['bart']['name'],
+    device_map='auto' if torch.cuda.is_available() else None,
+    torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+    local_files_only=False
+)
+```
+
+<Info>
+The bot automatically detects available GPU resources and optimizes model loading with FP16 precision on CUDA devices for faster inference.
+</Info>
+
+### 3. Asynchronous Processing
+
+Non-blocking message handling ensures responsive user experience:
+
+```python
+# From bot.py:69-70 - Async processing with typing indicator
+await update.message.chat.send_action(action="typing")
+response = await ai_handler.generate_response(user_message)
+```
+
+### 4. Robust Error Handling
+
+Comprehensive error handling with user-friendly fallback messages:
+
+```python
+# From bot.py:109-114
+try:
+    # Process message
+except Exception as e:
+    logger.error(f"Error processing message: {str(e)}")
+    await update.message.reply_text(
+        "I apologize, but I encountered an error while processing your message. "
+        "Please try again later."
+    )
+```
+
+### 5. Configurable Generation Parameters
+
+Fine-tune model behavior through environment variables and function parameters:
+
+- **Temperature**: Control creativity (default: 0.2 for focused responses)
+- **Top-p**: Nucleus sampling parameter (default: 0.4)
+- **Max length**: Adjustable based on message type
+- **Retry logic**: Multiple attempts to generate valid responses
+
+<Tip>
+The bot uses conservative generation parameters (low temperature and top-p) to ensure consistent, relevant responses while avoiding hallucinations.
+</Tip>
+
+## Environment Configuration
+
+MilesONerd AI can be customized through environment variables:
+
+| Variable | Description | Default |
+|----------|-------------|----------|
+| `TELEGRAM_BOT_TOKEN` | Telegram Bot API token (required) | None |
+| `DEFAULT_MODEL` | Default AI model to use | `llama` |
+| `ENABLE_CONTINUOUS_LEARNING` | Enable learning capabilities | `true` |
+| `SERPAPI_API_KEY` | Google Search API key (future use) | None |
+
+## Use Cases
+
+### Conversation & Q&A
+
+Engage in natural conversations with context-aware responses powered by Llama 3.1-Nemotron.
+
+### Text Summarization
+
+Summarize long articles, documents, or messages using keywords like "summarize" or "tldr".
+
+### Quick Information Retrieval
+
+Get concise answers to short questions with optimized response length.
+
+### Content Processing
+
+Automatically process and respond to messages with the most appropriate AI model.
+
+## Future Enhancements
+
+Planned features for upcoming releases:
+
+- Internet search integration using SerpAPI
+- Additional model support (Llama 3.3, Mistral variants)
+- Continuous learning from interactions
+- Advanced error handling and recovery
+- Performance optimizations for faster inference
+- Multi-modal support (images, documents)
+
+<Warning>
+**Resource Requirements**: The bot uses large AI models (70B parameters for Llama). Ensure adequate GPU memory (recommended: 40GB+ VRAM) or configure for CPU inference with sufficient RAM (80GB+).
+</Warning>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Quick Start Guide" icon="play" href="/quickstart">
+    Install and run your bot in minutes
+  </Card>
+  <Card title="Commands Reference" icon="terminal" href="/api/commands">
+    Learn all available bot commands
+  </Card>
+</CardGroup>
+
+---
+
+**Created with ❤️ by [MilesONerd](https://github.com/MilesONerd)**

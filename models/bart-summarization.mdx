@@ -1,0 +1,302 @@
+---
+title: 'BART Summarization'
+description: 'Facebook BART for intelligent text summarization'
+icon: 'file-lines'
+---
+
+## Overview
+
+MilesONerd AI Bot uses **Facebook's BART-Large** model for text summarization tasks. BART (Bidirectional and Auto-Regressive Transformers) is a sequence-to-sequence model that excels at:
+
+- Long document summarization
+- Key information extraction
+- Content condensation
+- Abstractive summarization
+
+<Info>
+Model ID: `facebook/bart-large` on Hugging Face
+</Info>
+
+## Model Configuration
+
+The BART model is configured as a conditional generation model for summarization:
+
+```python ai_handler.py
+'bart': {
+    'name': 'facebook/bart-large',
+    'type': 'conditional',
+    'task': 'summarization'
+}
+```
+
+## Text Summarization Method
+
+The `summarize_text()` method handles all text summarization operations using the BART model.
+
+### Method Signature
+
+```python ai_handler.py
+async def summarize_text(
+    self,
+    text: str,
+    max_length: int = 130,
+    min_length: int = 30
+) -> str:
+    """
+    Summarize text using BART model.
+    
+    Args:
+        text: Text to summarize
+        max_length: Maximum length of summary
+        min_length: Minimum length of summary
+        
+    Returns:
+        str: Summarized text
+    """
+```
+
+## Summarization Parameters
+
+<CardGroup cols={2}>
+  <Card title="max_length" icon="ruler-horizontal">
+    **Default: 130**
+    
+    Maximum length of the generated summary in tokens. Controls the upper bound of summary length.
+  </Card>
+  <Card title="min_length" icon="ruler-vertical">
+    **Default: 30**
+    
+    Minimum length of the generated summary in tokens. Ensures summaries are substantive.
+  </Card>
+  <Card title="length_penalty" icon="scale-balanced">
+    **Default: 2.0**
+    
+    Exponential penalty to the length. Values greater than 1.0 encourage longer sequences, less than 1.0 encourage shorter ones.
+  </Card>
+  <Card title="num_beams" icon="grid">
+    **Default: 4**
+    
+    Number of beams for beam search. Higher values produce better quality but slower generation.
+  </Card>
+</CardGroup>
+
+<Tip>
+The `length_penalty=2.0` setting encourages BART to generate comprehensive summaries rather than overly terse outputs.
+</Tip>
+
+## Complete Implementation
+
+Here's the full implementation of the text summarization method:
+
+```python ai_handler.py
+async def summarize_text(
+    self,
+    text: str,
+    max_length: int = 130,
+    min_length: int = 30
+) -> str:
+    """
+    Summarize text using BART model.
+    
+    Args:
+        text: Text to summarize
+        max_length: Maximum length of summary
+        min_length: Minimum length of summary
+        
+    Returns:
+        str: Summarized text
+    """
+    try:
+        inputs = self.tokenizers['bart'](
+            text,
+            return_tensors="pt",
+            truncation=True,
+            max_length=1024,
+            padding=True
+        ).to(self.models['bart'].device)
+        
+        summary_ids = self.models['bart'].generate(
+            inputs["input_ids"],
+            max_length=max_length,
+            min_length=min_length,
+            length_penalty=2.0,
+            num_beams=4,
+            early_stopping=True
+        )
+        
+        summary = self.tokenizers['bart'].decode(
+            summary_ids[0],
+            skip_special_tokens=True
+        )
+        return summary.strip()
+        
+    except Exception as e:
+        logger.error(f"Error summarizing text: {str(e)}")
+        return f"I apologize, but I encountered an error while trying to summarize the text. Please try again."
+```
+
+## Summarization Workflow
+
+<Accordion title="Step-by-Step Process">
+  1. **Input Tokenization**: Convert input text to tokens with truncation (max 1024 tokens)
+  2. **Device Transfer**: Move inputs to the same device as the BART model (CPU/GPU)
+  3. **Beam Search Generation**: Use beam search with 4 beams for high-quality summaries
+  4. **Length Control**: Apply min/max length constraints and length penalty
+  5. **Early Stopping**: Stop generation when all beams produce complete sequences
+  6. **Decoding**: Convert generated token IDs back to readable text
+  7. **Post-processing**: Strip whitespace and return clean summary
+</Accordion>
+
+<Note>
+BART can process up to 1024 input tokens (`ai_handler.py:206`), making it suitable for summarizing substantial documents.
+</Note>
+
+## Beam Search Explained
+
+The bot uses **beam search** with 4 beams to generate high-quality summaries:
+
+```python ai_handler.py
+summary_ids = self.models['bart'].generate(
+    inputs["input_ids"],
+    max_length=max_length,
+    min_length=min_length,
+    length_penalty=2.0,
+    num_beams=4,
+    early_stopping=True
+)
+```
+
+<CardGroup cols={2}>
+  <Card title="What is Beam Search?" icon="lightbulb">
+    Beam search explores multiple generation paths simultaneously, keeping the top N (4 in this case) most promising sequences at each step.
+  </Card>
+  <Card title="Why 4 Beams?" icon="balance-scale">
+    Balances output quality with generation speed. More beams = better quality but slower processing.
+  </Card>
+</CardGroup>
+
+## When Summarization is Triggered
+
+The BART summarization model is specifically invoked when:
+
+### Long Text Detection
+When users send messages exceeding a certain length threshold, the bot may automatically summarize for easier consumption:
+
+```python
+if len(user_message) > 1000:  # Example threshold
+    summary = await ai_handler.summarize_text(user_message)
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text=f"Summary: {summary}"
+    )
+```
+
+### Explicit Summarization Commands
+Users can explicitly request summarization:
+
+```python
+# User sends: /summarize [long text]
+summary = await ai_handler.summarize_text(
+    text=long_text,
+    max_length=130,
+    min_length=30
+)
+```
+
+### Document Processing
+When processing forwarded messages or documents that contain substantial text content.
+
+<Info>
+Summarization is particularly useful for condensing news articles, research papers, or lengthy messages into concise, digestible summaries.
+</Info>
+
+## Quality Features
+
+<CardGroup cols={2}>
+  <Card title="Abstractive Summarization" icon="wand-magic-sparkles">
+    BART generates new sentences rather than extracting existing ones, creating more coherent summaries
+  </Card>
+  <Card title="Early Stopping" icon="stop">
+    Efficient generation that stops when all beams find complete sequences
+  </Card>
+  <Card title="Length Control" icon="sliders">
+    Configurable min/max bounds ensure summaries are neither too brief nor too verbose
+  </Card>
+  <Card title="Error Handling" icon="shield-check">
+    Graceful error handling with user-friendly fallback messages
+  </Card>
+</CardGroup>
+
+## Usage Examples
+
+### Standard Summarization
+```python
+summary = await ai_handler.summarize_text(
+    text="""Long article about AI developments...
+    [1000+ words of content]
+    """
+)
+```
+
+### Custom Length Constraints
+```python
+# Shorter summary
+brief_summary = await ai_handler.summarize_text(
+    text=long_text,
+    max_length=80,
+    min_length=20
+)
+
+# Longer, more detailed summary
+detailed_summary = await ai_handler.summarize_text(
+    text=long_text,
+    max_length=200,
+    min_length=50
+)
+```
+
+<Warning>
+Input text is truncated to 1024 tokens. For very long documents, consider splitting into chunks or preprocessing the input.
+</Warning>
+
+## Performance Optimization
+
+- **Mixed Precision**: Uses `float16` on GPU for 50% memory reduction
+- **Automatic Device Mapping**: Efficiently utilizes available GPU resources
+- **Batch Processing**: Tokenization handles padding for consistent tensor shapes
+- **Early Stopping**: Beam search terminates early when possible
+
+```python ai_handler.py
+self.models['bart'] = BartForConditionalGeneration.from_pretrained(
+    self.model_configs['bart']['name'],
+    device_map='auto' if torch.cuda.is_available() else None,
+    torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+    local_files_only=False
+)
+```
+
+<Tip>
+For real-time applications, consider caching frequently summarized content or using async processing to avoid blocking the Telegram bot.
+</Tip>
+
+## Abstractive vs Extractive
+
+BART performs **abstractive summarization**, which differs from extractive approaches:
+
+| Feature | Abstractive (BART) | Extractive |
+|---------|-------------------|------------|
+| **Method** | Generates new sentences | Selects existing sentences |
+| **Coherence** | High - natural flow | Variable - may feel disjointed |
+| **Compression** | Better - rephrases ideas | Limited - copies text |
+| **Complexity** | Higher computational cost | Lower computational cost |
+| **Quality** | More human-like | More literal |
+
+<Info>
+Abstractive summarization produces more natural, coherent summaries that read like human-written content.
+</Info>
+
+## Next Steps
+
+<Card title="Back to Models Overview" icon="arrow-left" href="/models/overview">
+  Return to the AI Models overview page
+</Card>

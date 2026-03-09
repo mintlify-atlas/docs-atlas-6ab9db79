@@ -1,0 +1,173 @@
+---
+title: 'AI Models Overview'
+description: 'Introduction to the AI models powering MilesONerd AI Bot'
+icon: 'brain-circuit'
+---
+
+## Introduction
+
+MilesONerd AI Bot leverages state-of-the-art AI models to provide intelligent conversational responses and text summarization capabilities. The bot uses two primary models, each optimized for specific tasks:
+
+<CardGroup cols={2}>
+  <Card title="Llama 3.1-Nemotron" icon="message-bot" href="/models/llama-nemotron">
+    NVIDIA's powerful 70B parameter model for conversational AI and text generation
+  </Card>
+  <Card title="BART Summarization" icon="file-lines" href="/models/bart-summarization">
+    Facebook's BART model for intelligent text summarization
+  </Card>
+</CardGroup>
+
+## Model Configurations
+
+The AI models are configured in the `AIModelHandler` class with the following settings:
+
+```python ai_handler.py
+# Model configurations
+self.model_configs = {
+    'llama': {
+        'name': 'nvidia/Llama-3.1-Nemotron-70B-Instruct-HF',
+        'type': 'causal',
+        'task': 'text-generation'
+    },
+    'bart': {
+        'name': 'facebook/bart-large',
+        'type': 'conditional',
+        'task': 'summarization'
+    }
+}
+```
+
+<Note>
+The default model is set to `llama` and can be configured via the `DEFAULT_MODEL` environment variable.
+</Note>
+
+## GPU Acceleration
+
+MilesONerd AI Bot is optimized to leverage GPU acceleration using PyTorch for enhanced performance:
+
+<Accordion title="GPU Configuration Details">
+  - **CUDA Support**: Automatically detects and utilizes CUDA-enabled GPUs
+  - **Precision**: Uses `float16` on GPU for memory efficiency, falls back to `float32` on CPU
+  - **Device Mapping**: Automatic device mapping with `device_map='auto'` for optimal GPU utilization
+  - **Memory Logging**: Tracks available GPU memory during initialization
+</Accordion>
+
+```python ai_handler.py
+logger.info(f"CUDA available: {torch.cuda.is_available()}")
+if torch.cuda.is_available():
+    logger.info(f"GPU Device: {torch.cuda.get_device_name(0)}")
+    logger.info(f"Available GPU memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.2f} GB")
+```
+
+## Model Usage
+
+### When Each Model is Used
+
+<CardGroup cols={2}>
+  <Card title="Llama 3.1-Nemotron" icon="comments">
+    **Primary Use Cases:**
+    - General conversational responses
+    - Question answering
+    - Creative text generation
+    - Context-aware dialogue
+  </Card>
+  <Card title="BART" icon="compress">
+    **Primary Use Cases:**
+    - Long text summarization
+    - Document condensation
+    - Key point extraction
+    - Content digestion
+  </Card>
+</CardGroup>
+
+## Model Initialization Process
+
+The bot initializes both models asynchronously during startup:
+
+```python ai_handler.py
+async def initialize_models(self) -> bool:
+    """
+    Initialize AI models asynchronously.
+    Returns:
+        bool: True if initialization successful, False otherwise
+    """
+    try:
+        logger.info("Starting model initialization...")
+        logger.info(f"CUDA available: {torch.cuda.is_available()}")
+        if torch.cuda.is_available():
+            logger.info(f"GPU Device: {torch.cuda.get_device_name(0)}")
+            logger.info(f"Available GPU memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.2f} GB")
+        
+        # Initialize BART for summarization
+        logger.info(f"Loading BART model: {self.model_configs['bart']['name']}")
+        try:
+            self.tokenizers['bart'] = BartTokenizer.from_pretrained(
+                self.model_configs['bart']['name'],
+                local_files_only=False
+            )
+            logger.info("BART tokenizer loaded successfully")
+            
+            self.models['bart'] = BartForConditionalGeneration.from_pretrained(
+                self.model_configs['bart']['name'],
+                device_map='auto' if torch.cuda.is_available() else None,
+                torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+                local_files_only=False
+            )
+            logger.info("BART model loaded successfully")
+        except Exception as e:
+            logger.error(f"Error loading BART model: {str(e)}")
+            return False
+        
+        # Initialize Llama for general text generation
+        logger.info(f"Loading Llama model: {self.model_configs['llama']['name']}")
+        try:
+            self.tokenizers['llama'] = AutoTokenizer.from_pretrained(
+                self.model_configs['llama']['name'],
+                local_files_only=False
+            )
+            logger.info("Llama tokenizer loaded successfully")
+            
+            self.models['llama'] = AutoModelForCausalLM.from_pretrained(
+                self.model_configs['llama']['name'],
+                device_map='auto' if torch.cuda.is_available() else None,
+                torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+                local_files_only=False
+            )
+            logger.info("Llama model loaded successfully")
+        except Exception as e:
+            logger.error(f"Error loading Llama model: {str(e)}")
+            return False
+        
+        logger.info("All models initialized successfully")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error initializing models: {str(e)}")
+        return False
+```
+
+<Info>
+The initialization process includes comprehensive error handling and logging to ensure smooth startup and easy troubleshooting.
+</Info>
+
+## Initialization Workflow
+
+1. **GPU Detection**: Check for CUDA availability and log GPU specifications
+2. **BART Loading**: Load BART tokenizer and model for summarization
+3. **Llama Loading**: Load Llama tokenizer and model for text generation
+4. **Validation**: Return success/failure status based on loading results
+
+<Warning>
+Model initialization requires significant memory resources. Ensure adequate GPU memory (recommended: 16GB+ VRAM) or sufficient RAM for CPU inference.
+</Warning>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Explore Llama 3.1-Nemotron" icon="arrow-right" href="/models/llama-nemotron">
+    Learn about text generation and conversational AI
+  </Card>
+  <Card title="Explore BART Summarization" icon="arrow-right" href="/models/bart-summarization">
+    Discover how text summarization works
+  </Card>
+</CardGroup>
